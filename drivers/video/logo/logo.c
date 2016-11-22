@@ -44,9 +44,6 @@ const struct linux_logo * __init_refok fb_find_logo(int depth)
 {
 	const struct linux_logo *logo = NULL;
 
-	if (nologo || logos_freed)
-		return NULL;
-
 	if (depth >= 1) {
 #ifdef CONFIG_LOGO_LINUX_MONO
 		/* Generic Linux logo */
@@ -110,6 +107,10 @@ const struct linux_logo * __init_refok fb_find_logo(int depth)
 #ifdef CONFIG_LOGO_M32R_CLUT224
 		/* M32R Linux logo */
 		logo = &logo_m32r_clut224;
+#endif
+#ifdef CONFIG_LOGO_AEMICS_CLUT224
+		/* AEMICS logo */
+		logo = &logo_aemics_clut224;
 #endif
 	}
 	return logo;
