@@ -1,5 +1,13 @@
 ifeq ($(CONFIG_OF),y)
 
+# AEMICS DIN module
+ifeq ($(CONFIG_SOC_SAM_V7),y)
+	AEDIN_DT_OVERLAYS=y
+endif
+ifeq ($(AEDIN_DT_OVERLAYS),y)
+	dts-dirs += overlays
+endif
+
 dtb-$(CONFIG_ARCH_ALPINE) += \
 	alpine-db.dtb
 dtb-$(CONFIG_MACH_ASM9260) += \
@@ -799,4 +807,10 @@ dtstree		:= $(srctree)/$(src)
 dtb-$(CONFIG_OF_ALL_DTBS) := $(patsubst $(dtstree)/%.dts,%.dtb, $(wildcard $(dtstree)/*.dts))
 
 always		:= $(dtb-y)
+subdir-y	:= $(dts-dirs)
 clean-files	:= *.dtb
+
+# Enable fixups to support overlays
+ifeq ($(AEDIN_DT_OVERLAYS),y)
+	DTC_FLAGS ?= -@ -H epapr
+endif

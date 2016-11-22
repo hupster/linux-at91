@@ -1,0 +1,63 @@
+/*
+ * Device Tree overlay for the AEMICS DIN module processing board
+ *
+ * Configures flx3 for I2C
+ *
+ *  Copyright (C) 2016 AEMICS
+ */
+/dts-v1/;
+/plugin/;
+
+#include "../sama5d2-pinfunc.h"
+#include <dt-bindings/mfd/atmel-flexcom.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/dma/at91.h>
+#include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/clock/at91.h>
+
+/{
+	compatible = "atmel,sama5d2-aedin", "atmel,sama5d2", "atmel,sama5";
+
+	fragment@0 {
+		target = <&flx2>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <1>;
+			atmel,flexcom-mode = <ATMEL_FLEXCOM_MODE_TWI>;
+			status = "okay";
+			flx3_i2c: i2c@600 {
+				compatible = "atmel,sama5d2-i2c";
+				reg = <0x600 0x200>;
+				interrupts = <22 IRQ_TYPE_LEVEL_HIGH 7>;
+				dmas = <&dma0
+				(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1) |
+				 AT91_XDMAC_DT_PERID(17))>,
+				   <&dma0
+				(AT91_XDMAC_DT_MEM_IF(0) | AT91_XDMAC_DT_PER_IF(1) |
+				 AT91_XDMAC_DT_PERID(18))>;
+				dma-names = "tx", "rx";
+				#address-cells = <1>;
+				#size-cells = <0>;
+				clocks = <&flx3_clk>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_flx3_default>;
+				atmel,fifo-size = <16>;
+				status = "okay";
+			};
+		};
+	};
+	
+	fragment@1 {
+		target = <&pioA>;
+		__overlay__ {
+			pinctrl_flx3_default: flx3_default {
+				pinmux = <PIN_PC20__FLEXCOM3_IO0>,
+					 <PIN_PC19__FLEXCOM3_IO1>,
+					 <PIN_PC18__FLEXCOM3_IO2>,
+					 <PIN_PC21__FLEXCOM3_IO3>,
+					 <PIN_PC22__FLEXCOM3_IO4>;
+				bias-disable;
+			};
+		};
+	};
+};
