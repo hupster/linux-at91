@@ -109,14 +109,16 @@ static void atmel_hlcdc_crtc_mode_set_nofb(struct drm_crtc *c)
 
 	prate = clk_get_rate(crtc->dc->hlcdc->sys_clk);
 	mode_rate = adj->crtc_clock * 1000;
-	if ((prate / 2) < mode_rate) {
-		prate *= 2;
-		cfg |= ATMEL_HLCDC_CLKSEL;
-	}
 
-	div = DIV_ROUND_UP(prate, mode_rate);
+	/* always use 2x system clock to reduce rounding error */
+	prate *= 2;
+	cfg |= ATMEL_HLCDC_CLKSEL;
+
+	div = DIV_ROUND_CLOSEST(prate, mode_rate);
 	if (div < 2)
 		div = 2;
+
+	dev_info(c->dev->dev, "pixel clock: %d rounded to %d kHz\n", adj->crtc_clock, (int)(prate/div/1000));
 
 	cfg |= ATMEL_HLCDC_CLKDIV(div);
 
