@@ -1152,6 +1152,8 @@ static int tda998x_connector_get_modes(struct drm_connector *connector)
 {
 	struct tda998x_priv *priv = conn_to_tda998x_priv(connector);
 	struct edid *edid;
+	u32 bus_format = MEDIA_BUS_FMT_RGB888_1X24;
+	int ret;
 	int n;
 
 	/*
@@ -1179,6 +1181,10 @@ static int tda998x_connector_get_modes(struct drm_connector *connector)
 	n = drm_add_edid_modes(connector, edid);
 	priv->is_hdmi_sink = drm_detect_hdmi_monitor(edid);
 	kfree(edid);
+
+	ret = drm_display_info_set_bus_formats(&connector->display_info, &bus_format, 1);
+	if (ret)
+		return ret;
 
 	return n;
 }
