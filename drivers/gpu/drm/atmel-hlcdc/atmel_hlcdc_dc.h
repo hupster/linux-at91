@@ -174,6 +174,8 @@ void atmel_hlcdc_crtc_suspend(struct drm_crtc *crtc);
 void atmel_hlcdc_crtc_resume(struct drm_crtc *crtc);
 
 int atmel_hlcdc_crtc_create(struct drm_device *dev);
+void atmel_hlcdc_crtc_set_simulate_vesa_sync(struct drm_crtc *c, bool enabled);
+void atmel_hlcdc_crtc_set_invert_pixel_clock(struct drm_crtc *c, bool enabled);
 
 int atmel_hlcdc_create_outputs(struct drm_device *dev);
 

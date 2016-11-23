@@ -63,6 +63,8 @@ struct atmel_hlcdc_crtc {
 	struct drm_pending_vblank_event *event;
 	int id;
 	bool enabled;
+	bool simulate_vesa_sync;
+	bool invert_pixel_clock;
 };
 
 static inline struct atmel_hlcdc_crtc *
@@ -133,6 +135,11 @@ static void atmel_hlcdc_crtc_mode_set_nofb(struct drm_crtc *c)
 	state = drm_crtc_state_to_atmel_hlcdc_crtc_state(c->state);
 	cfg |= state->output_mode << 8;
 
+	if (crtc->invert_pixel_clock)
+	{
+		cfg |= ATMEL_HLCDC_CLKPOL;
+	}
+
 	regmap_update_bits(regmap, ATMEL_HLCDC_CFG(5),
 			   ATMEL_HLCDC_HSPOL | ATMEL_HLCDC_VSPOL |
 			   ATMEL_HLCDC_VSPDLYS | ATMEL_HLCDC_VSPDLYE |
@@ -148,6 +155,24 @@ static bool atmel_hlcdc_crtc_mode_fixup(struct drm_crtc *c,
 {
 	struct atmel_hlcdc_crtc *crtc = drm_crtc_to_atmel_hlcdc_crtc(c);
 
+	if (crtc->simulate_vesa_sync) {
+		/*
+		 * hlcdc does not generate VESA-compliant sync but aligns
+		 * VS on the second edge of HS instead of first edge.
+		 * We use adjusted_mode, to fixup sync by aligning both rising
+		 * edges and add HSKEW offset to fix the sync.
+		 */
+		adjusted_mode->hskew = mode->hsync_end - mode->hsync_start;
+		adjusted_mode->flags |= DRM_MODE_FLAG_HSKEW;
+
+		if (mode->flags & DRM_MODE_FLAG_NHSYNC) {
+			adjusted_mode->flags |= DRM_MODE_FLAG_PHSYNC;
+			adjusted_mode->flags &= ~DRM_MODE_FLAG_NHSYNC;
+		} else {
+			adjusted_mode->flags |= DRM_MODE_FLAG_NHSYNC;
+			adjusted_mode->flags &= ~DRM_MODE_FLAG_PHSYNC;
+		}
+	}
 	return atmel_hlcdc_dc_mode_valid(crtc->dc, adjusted_mode) == MODE_OK;
 }
 
@@ -503,3 +528,14 @@ fail:
 	return ret;
 }
 
+void atmel_hlcdc_crtc_set_simulate_vesa_sync(struct drm_crtc *c, bool enabled)
+{
+	struct atmel_hlcdc_crtc *crtc = drm_crtc_to_atmel_hlcdc_crtc(c);
+	crtc->simulate_vesa_sync = enabled;
+}
+
+void atmel_hlcdc_crtc_set_invert_pixel_clock(struct drm_crtc *c, bool enabled)
+{
+	struct atmel_hlcdc_crtc *crtc = drm_crtc_to_atmel_hlcdc_crtc(c);
+	crtc->invert_pixel_clock = enabled;
+}

@@ -595,6 +595,7 @@ static int atmel_hlcdc_dc_load(struct drm_device *dev)
 	struct platform_device *pdev = to_platform_device(dev->dev);
 	const struct of_device_id *match;
 	struct atmel_hlcdc_dc *dc;
+	struct drm_crtc *crtc;
 	int ret;
 
 	match = of_match_node(atmel_hlcdc_of_match, dev->dev->parent->of_node);
@@ -639,6 +640,17 @@ static int atmel_hlcdc_dc_load(struct drm_device *dev)
 	if (ret < 0) {
 		dev_err(dev->dev, "failed to initialize mode setting\n");
 		goto err_periph_clk_disable;
+	}
+
+	if (of_property_read_bool(dev->dev->of_node, "simulate_vesa_sync")) {
+		/* enable simulate_vesa_sync */
+		list_for_each_entry(crtc, &dev->mode_config.crtc_list, head)
+			atmel_hlcdc_crtc_set_simulate_vesa_sync(crtc, true);
+	}
+	if (of_property_read_bool(dev->dev->of_node, "invert_pixel_clock")) {
+		/* set clock_polarity */
+		list_for_each_entry(crtc, &dev->mode_config.crtc_list, head)
+			atmel_hlcdc_crtc_set_invert_pixel_clock(crtc, true);
 	}
 
 	drm_mode_config_reset(dev);
