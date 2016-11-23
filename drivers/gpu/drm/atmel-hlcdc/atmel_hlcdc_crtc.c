@@ -107,6 +107,25 @@ static void atmel_hlcdc_crtc_mode_set_nofb(struct drm_crtc *c)
 
 	cfg = 0;
 
+	if (adj->flags & DRM_MODE_FLAG_NVSYNC)
+		cfg |= ATMEL_HLCDC_VSPOL;
+
+	if (adj->flags & DRM_MODE_FLAG_NHSYNC)
+		cfg |= ATMEL_HLCDC_HSPOL;
+
+	state = drm_crtc_state_to_atmel_hlcdc_crtc_state(c->state);
+	cfg |= state->output_mode << 8;
+
+	regmap_update_bits(regmap, ATMEL_HLCDC_CFG(5),
+			   ATMEL_HLCDC_HSPOL | ATMEL_HLCDC_VSPOL |
+			   ATMEL_HLCDC_VSPDLYS | ATMEL_HLCDC_VSPDLYE |
+			   ATMEL_HLCDC_DISPPOL | ATMEL_HLCDC_DISPDLY |
+			   ATMEL_HLCDC_VSPSU | ATMEL_HLCDC_VSPHO |
+			   ATMEL_HLCDC_GUARDTIME_MASK | ATMEL_HLCDC_MODE_MASK,
+			   cfg);
+
+	cfg = 0;
+
 	prate = clk_get_rate(crtc->dc->hlcdc->sys_clk);
 	mode_rate = adj->crtc_clock * 1000;
 
@@ -122,33 +141,14 @@ static void atmel_hlcdc_crtc_mode_set_nofb(struct drm_crtc *c)
 
 	cfg |= ATMEL_HLCDC_CLKDIV(div);
 
-	regmap_update_bits(regmap, ATMEL_HLCDC_CFG(0),
-			   ATMEL_HLCDC_CLKSEL | ATMEL_HLCDC_CLKDIV_MASK |
-			   ATMEL_HLCDC_CLKPOL, cfg);
-
-	cfg = 0;
-
-	if (adj->flags & DRM_MODE_FLAG_NVSYNC)
-		cfg |= ATMEL_HLCDC_VSPOL;
-
-	if (adj->flags & DRM_MODE_FLAG_NHSYNC)
-		cfg |= ATMEL_HLCDC_HSPOL;
-
-	state = drm_crtc_state_to_atmel_hlcdc_crtc_state(c->state);
-	cfg |= state->output_mode << 8;
-
 	if (crtc->invert_pixel_clock)
 	{
 		cfg |= ATMEL_HLCDC_CLKPOL;
 	}
 
-	regmap_update_bits(regmap, ATMEL_HLCDC_CFG(5),
-			   ATMEL_HLCDC_HSPOL | ATMEL_HLCDC_VSPOL |
-			   ATMEL_HLCDC_VSPDLYS | ATMEL_HLCDC_VSPDLYE |
-			   ATMEL_HLCDC_DISPPOL | ATMEL_HLCDC_DISPDLY |
-			   ATMEL_HLCDC_VSPSU | ATMEL_HLCDC_VSPHO |
-			   ATMEL_HLCDC_GUARDTIME_MASK | ATMEL_HLCDC_MODE_MASK,
-			   cfg);
+	regmap_update_bits(regmap, ATMEL_HLCDC_CFG(0),
+			   ATMEL_HLCDC_CLKSEL | ATMEL_HLCDC_CLKDIV_MASK |
+			   ATMEL_HLCDC_CLKPOL, cfg);
 }
 
 static bool atmel_hlcdc_crtc_mode_fixup(struct drm_crtc *c,
